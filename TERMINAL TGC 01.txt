@@ -1,0 +1,123 @@
+<div id="bloomberg-capital-widget" style="font-family: 'Arial Black', Arial, sans-serif; background: #000; color: #fff; border: 1px solid #333; max-width: 100%;">
+  <!-- Cabeçalho Bloomberg -->
+  <div style="background: #0f1621; padding: 8px 12px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; align-items: center;">
+      <div style="width: 20px; height: 20px; background: #ff5f00; margin-right: 10px;"></div>
+      <div style="font-weight: bold; font-size: 14px; color: #ff5f00;">FLUXO DE CAPITAL DIÁRIO - B3 (ÚLTIMOS 10 DIAS)</div>
+    </div>
+    <div style="display: flex; align-items: center;">
+      <div id="market-status" style="width: 10px; height: 10px; border-radius: 50%; background: #00e676; margin-right: 8px; animation: blink 1.5s infinite;"></div>
+      <div id="update-time" style="font-size: 11px; color: #00e676; font-weight: bold;">LIVE</div>
+    </div>
+  </div>
+
+  <!-- Gráfico e Tabela -->
+  <div style="padding: 10px; display: flex; flex-direction: column; gap: 15px;">
+    <canvas id="capitalFlowChart" style="height: 300px; background: #121826;"></canvas>
+    <div style="overflow-x: auto;">
+      <table id="capitalFlowTable" style="width: 100%; border-collapse: collapse; color: #ff8c00; font-size: 12px;">
+        <thead>
+          <tr style="background: #1a2230; border-bottom: 1px solid #333;">
+            <th style="padding: 8px 12px; text-align: left; border-right: 1px solid #333;">DATA</th>
+            <th style="padding: 8px 12px; text-align: right; border-right: 1px solid #333;">ESTRANGEIRO (R$ bi)</th>
+            <th style="padding: 8px 12px; text-align: right; border-right: 1px solid #333;">INSTITUCIONAL</th>
+            <th style="padding: 8px 12px; text-align: right; border-right: 1px solid #333;">PESSOA FÍSICA</th>
+            <th style="padding: 8px 12px; text-align: right;">OUTROS</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Rodapé Bloomberg -->
+  <div style="background: #0f1621; padding: 6px 12px; border-top: 1px solid #333; font-size: 10px; color: #666; display: flex; justify-content: space-between;">
+    <div>DADOS EM TEMPO REAL VIA API DADOS DE MERCADO</div>
+    <div>ATUALIZADO EM: <span id="current-date">09/04/2025</span></div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Configuração inicial (substitua pela API real)
+  const mockData = {
+    dates: ['01/04', '02/04', '03/04', '04/04', '05/04', '06/04', '07/04', '08/04', '09/04'],
+    foreign: [1200, -800, 1500, -200, 900, -1100, 1300, -400, 700],
+    institutional: [800, 600, -200, 400, -500, 300, -700, 200, -100],
+    retail: [-300, 200, -400, 100, -200, 150, -100, 50, -300],
+    others: [200, -100, 150, -50, 100, -80, 50, -30, 80]
+  };
+
+  // Renderizar gráfico
+  const ctx = document.getElementById('capitalFlowChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: mockData.dates,
+      datasets: [
+        { label: 'Estrangeiro', data: mockData.foreign, backgroundColor: 'rgba(75, 192, 192, 0.7)' },
+        { label: 'Institucional', data: mockData.institutional, backgroundColor: 'rgba(153, 102, 255, 0.7)' },
+        { label: 'Pessoa Física', data: mockData.retail, backgroundColor: 'rgba(255, 159, 64, 0.7)' },
+        { label: 'Outros', data: mockData.others, backgroundColor: 'rgba(54, 162, 235, 0.7)' }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { stacked: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#fff' } },
+        y: { 
+          stacked: false, 
+          grid: { color: 'rgba(255, 255, 255, 0.1)' }, 
+          ticks: { color: '#fff', callback: (value) => `R$ ${value / 1000} bi` } 
+        }
+      },
+      plugins: {
+        legend: { labels: { color: '#fff', font: { weight: 'bold' } } },
+        tooltip: {
+          callbacks: {
+            label: (context) => `${context.dataset.label}: R$ ${context.raw.toLocaleString()} mi`
+          }
+        }
+      }
+    }
+  });
+
+  // Preencher tabela
+  const tableBody = document.querySelector('#capitalFlowTable tbody');
+  mockData.dates.forEach((date, i) => {
+    const row = document.createElement('tr');
+    row.style.borderBottom = '1px solid #333';
+    row.innerHTML = `
+      <td style="padding: 8px 12px; border-right: 1px solid #333;">${date}/2025</td>
+      <td style="padding: 8px 12px; text-align: right; border-right: 1px solid #333; color: ${mockData.foreign[i] >= 0 ? '#00e676' : '#ff3d3d'};">${(mockData.foreign[i] / 1000).toFixed(2)}</td>
+      <td style="padding: 8px 12px; text-align: right; border-right: 1px solid #333; color: ${mockData.institutional[i] >= 0 ? '#00e676' : '#ff3d3d'};">${(mockData.institutional[i] / 1000).toFixed(2)}</td>
+      <td style="padding: 8px 12px; text-align: right; border-right: 1px solid #333; color: ${mockData.retail[i] >= 0 ? '#00e676' : '#ff3d3d'};">${(mockData.retail[i] / 1000).toFixed(2)}</td>
+      <td style="padding: 8px 12px; text-align: right; color: ${mockData.others[i] >= 0 ? '#00e676' : '#ff3d3d'};">${(mockData.others[i] / 1000).toFixed(2)}</td>
+    `;
+    tableBody.appendChild(row);
+  });
+
+  // Atualizar data
+  document.getElementById('current-date').textContent = new Date().toLocaleDateString('pt-BR');
+
+  // Animação do status "LIVE"
+  setInterval(() => {
+    const dot = document.getElementById('market-status');
+    dot.style.opacity = dot.style.opacity === '0.3' ? '1' : '0.3';
+  }, 750);
+</script>
+
+<style>
+  @keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+  }
+  #bloomberg-capital-widget {
+    box-shadow: 0 0 15px rgba(255, 95, 0, 0.1);
+  }
+  #capitalFlowTable tbody tr:hover {
+    background: #1e2a3a;
+  }
+</style>
